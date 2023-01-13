@@ -32,18 +32,23 @@ class Car:
         self.sprite_rect = AssetPool.get_sprite(self.sprite_path).get_rect()
         self.rect = AssetPool.get_sprite(self.sprite_path).get_rect(center=self.position)
 
+        # tires
+        self.tires_positions = [[], []]
+
     def update(self, frame_time_s):
         # print(self.position, round(self.velocity, 2), self.angle, self.facing_direction, self.input_vector)
         print(f"Velocity: {self.velocity:.2f} px/s, Braking: {self.braking}, Turn speed: {self.turn_speed:.2f} deg/s")
 
         # turn speed depends on current car velocity
         if self.velocity >= 0:
-            self.turn_speed = max(self.min_turn_speed, (self.max_turn_speed * (exp(self.velocity / self.max_velocity) - 1) / (e-1)))
+            self.turn_speed = max(self.min_turn_speed, (self.max_turn_speed * (exp(min((self.velocity + self.max_velocity / 3) / self.max_velocity, 1)) - 1) / (e-1)))
         else:
             self.turn_speed = max(self.min_turn_speed, (self.max_turn_speed * (exp(self.velocity / self.min_velocity) - 1) / (e-1)))
 
         # acceleration and breaks
         if self.braking:
+            self.tires_positions[0].append(self.position - self.facing_direction.rotate(-30) * self.sprite_rect.height * 3.5 / 2)  # left tire
+            self.tires_positions[1].append(self.position - self.facing_direction.rotate(30) * self.sprite_rect.height * 3.5 / 2)  # right tire
             if self.velocity > 0:
                 self.velocity -= self.brake_acceleration * frame_time_s
                 # TODO: take these clippings out
@@ -67,6 +72,11 @@ class Car:
                 if self.velocity > 0:
                     self.velocity = 0
 
+        if not self.braking:
+            # TODO: safe old trails
+            if self.tires_positions[0] or self.tires_positions[1]:
+                self.tires_positions = [[], []]
+
         # clipping speed
         if self.velocity > self.max_velocity and self.input_vector.y == 1:
             self.velocity = self.max_velocity
@@ -89,7 +99,14 @@ class Car:
             self.rect.center = self.position
 
     def draw(self, surface: Surface):
+        # tire trails
+        for tire in [0, 1]:
+            for p1, p2 in zip(self.tires_positions[tire][:-1], self.tires_positions[tire][1:]):
+                pygame.draw.line(surface, (127, 127, 127), p1, p2, 12)
+
+        # car itself
         sprite = AssetPool.get_sprite(self.sprite_path)
+        sprite.set_colorkey((0, 255, 0))
         sprite = pygame.transform.scale(sprite, [d * 4 for d in [self.sprite_rect.width, self.sprite_rect.height]])
         self.rect = sprite.get_rect(center=self.position)
         sprite = pygame.transform.rotate(sprite, self.angle)

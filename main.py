@@ -8,7 +8,7 @@ from car import Car
 
 WIN_SIZE = 1920, 1280
 WIN_WIDTH, WIN_HEIGHT = WIN_SIZE
-TARGET_FPS = 60
+TARGET_FPS = 0
 
 
 class Application:
@@ -27,6 +27,7 @@ class Application:
 
             frame_time_ms = self.clock.tick(TARGET_FPS)
             frame_time_s = frame_time_ms / 1000.
+            print(f"\nFPS: {int(self.clock.get_fps())}")
 
             self._handle_events()
             self._update_states(frame_time_s)
@@ -61,7 +62,7 @@ class Application:
         self.car.update(frame_time_s)
 
     def _draw_graphics(self):
-        self.screen.fill((255, 255, 255))
+        self.screen.fill((45, 191, 10))
         self.car.draw(self.screen)
         pygame.display.update()
 
