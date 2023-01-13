@@ -30,6 +30,7 @@ class Application:
             print(f"\nFPS: {int(self.clock.get_fps())}")
 
             self._handle_events()
+            self._car_input()
             self._update_states(frame_time_s)
             self._draw_graphics()
 
@@ -40,23 +41,26 @@ class Application:
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     self.stop()
-                elif event.key == pygame.K_w:
-                    self.car.input_vector.y = 1
-                elif event.key == pygame.K_s:
-                    self.car.input_vector.y = -1
-                elif event.key == pygame.K_a:
-                    self.car.input_vector.x = 1
-                elif event.key == pygame.K_d:
-                    self.car.input_vector.x = -1
-                elif event.key == pygame.K_SPACE:
-                    self.car.braking = True
-            elif event.type == pygame.KEYUP:
-                if event.key in [pygame.K_w, pygame.K_s]:
-                    self.car.input_vector.y = 0
-                elif event.key in [pygame.K_a, pygame.K_d]:
-                    self.car.input_vector.x = 0
-                elif event.key == pygame.K_SPACE:
-                    self.car.braking = False
+
+    def _car_input(self):
+        pressed_keys = pygame.key.get_pressed()
+        # steering
+        if pressed_keys[pygame.K_UP] or pressed_keys[pygame.K_w]:
+            self.car.input_vector.y = 1
+        if pressed_keys[pygame.K_DOWN] or pressed_keys[pygame.K_s]:
+            self.car.input_vector.y = -1
+        if pressed_keys[pygame.K_LEFT] or pressed_keys[pygame.K_a]:
+            self.car.input_vector.x = 1
+        if pressed_keys[pygame.K_RIGHT] or pressed_keys[pygame.K_d]:
+            self.car.input_vector.x = -1
+        # brakes
+        if pressed_keys[pygame.K_SPACE]:
+            self.car.braking = True
+        else:
+            self.car.braking = False
+        # reset
+        if pressed_keys[pygame.K_r]:
+            self.car.reset()
 
     def _update_states(self, frame_time_s):
         self.car.update(frame_time_s)

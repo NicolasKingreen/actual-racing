@@ -9,13 +9,14 @@ from asset_pool import AssetPool
 
 class Car:
     def __init__(self, position: Vector2):
-        self.position = position
+        self.spawn_position = position
+        self.position = Vector2(self.spawn_position)
 
         self.facing_direction = Vector2(0, -1)  # faces up
         self.angle = 0  # TODO: take it from facing direction vector
         self.velocity = 0
 
-        self.max_velocity = 500
+        self.max_velocity = 750
         self.min_velocity = -100
         self.acceleration = 150
         self.friction_acceleration = 120
@@ -35,6 +36,15 @@ class Car:
         # tires
         self.tires_positions = [[], []]
 
+    def reset(self):
+        self.position = Vector2(self.spawn_position)
+        self.facing_direction = Vector2(0, -1)
+        self.angle = 0
+        self.velocity = 0
+        self.input_vector = Vector2()
+        self.rect.center = self.position
+        self.tires_positions = [[], []]
+
     def update(self, frame_time_s):
         # print(self.position, round(self.velocity, 2), self.angle, self.facing_direction, self.input_vector)
         print(f"Velocity: {self.velocity:.2f} px/s, Braking: {self.braking}, Turn speed: {self.turn_speed:.2f} deg/s")
@@ -47,8 +57,15 @@ class Car:
 
         # acceleration and breaks
         if self.braking:
-            self.tires_positions[0].append(self.position - self.facing_direction.rotate(-30) * self.sprite_rect.height * 3.5 / 2)  # left tire
-            self.tires_positions[1].append(self.position - self.facing_direction.rotate(30) * self.sprite_rect.height * 3.5 / 2)  # right tire
+            # left tire trail
+            left_tire_position = self.position - self.facing_direction.rotate(-30) * self.sprite_rect.height * 3.5 / 2
+            if left_tire_position not in self.tires_positions[0]:
+                self.tires_positions[0].append(left_tire_position)
+            # right tire trail
+            right_tire_position = self.position - self.facing_direction.rotate(30) * self.sprite_rect.height * 3.5 / 2
+            if right_tire_position not in self.tires_positions[1]:
+                self.tires_positions[1].append(right_tire_position)
+            # moving freely car slows down
             if self.velocity > 0:
                 self.velocity -= self.brake_acceleration * frame_time_s
                 # TODO: take these clippings out
@@ -72,8 +89,9 @@ class Car:
                 if self.velocity > 0:
                     self.velocity = 0
 
+        # clearing tire trails
         if not self.braking:
-            # TODO: safe old trails
+            # TODO: save old trails
             if self.tires_positions[0] or self.tires_positions[1]:
                 self.tires_positions = [[], []]
 
@@ -85,11 +103,14 @@ class Car:
 
         # turning
         if self.input_vector.x and self.velocity != 0:
-            if self.velocity >= 0:
-                turn_direction = self.input_vector.x
-            elif self.velocity < 0:
-                turn_direction = -self.input_vector.x
-            delta_angle = turn_direction * self.turn_speed * frame_time_s
+            turn_direction = self.input_vector.x
+            if self.velocity < 0:
+                turn_direction *= -1
+
+            if not self.braking:
+                delta_angle = turn_direction * self.turn_speed * frame_time_s
+            else:
+                delta_angle = turn_direction * self.max_turn_speed * frame_time_s
             self.facing_direction.rotate_ip(-delta_angle)
             self.angle += delta_angle
 
@@ -97,6 +118,8 @@ class Car:
         if self.velocity:
             self.position += self.facing_direction * self.velocity * frame_time_s
             self.rect.center = self.position
+
+        self.input_vector = Vector2()
 
     def draw(self, surface: Surface):
         # tire trails
