@@ -8,7 +8,7 @@ from car import Car
 
 WIN_SIZE = 1920, 1280
 WIN_WIDTH, WIN_HEIGHT = WIN_SIZE
-TARGET_FPS = 0
+TARGET_FPS = 60
 
 
 class Application:
@@ -54,10 +54,7 @@ class Application:
         if pressed_keys[pygame.K_RIGHT] or pressed_keys[pygame.K_d]:
             self.car.input_vector.x = -1
         # brakes
-        if pressed_keys[pygame.K_SPACE]:
-            self.car.braking = True
-        else:
-            self.car.braking = False
+        self.car.braking = pressed_keys[pygame.K_SPACE]
         # reset
         if pressed_keys[pygame.K_r]:
             self.car.reset()
